@@ -1,0 +1,55 @@
+## Step 1Authorization : 
+Bearer eyJhY2Nlc3NfdG9rZW4iOiJleUpoYkdjaU9pSklVekkxTmlJc0ltdHBaQ0k2SWpWNUwzWTBTVEZYTkZNMFVVMXRNVFlpTENKMGVYQWlPaUpLVjFRaWZRLmV5SmhZV3dpT2lKaFlXd3hJaXdpWVcxeUlqcGJleUp0WlhSb2IyUWlPaUp2WVhWMGFDSXNJblJwYldWemRHRnRjQ0k2TVRjMU5EUTVOekF3TVgxZExDSmhjSEJmYldWMFlXUmhkR0VpT25zaWIzSm5ZVzVwZW1GMGFXOXVYMmxrSWpvaU1tTTRNVGd5WTJFdFltWXlNaTAwTmpBMUxXSmpaVGt0TURVNFpUUTVORE5oTm1NMUlpd2ljSEp2ZG1sa1pYSWlPaUpsYldGcGJDSXNJbkJ5YjNacFpHVnljeUk2V3lKbGJXRnBiQ0lzSW1kdmIyZHNaU0pkTENKeWIyeGxJam9pWVdSdGFXNGlmU3dpWVhWa0lqb2lZWFYwYUdWdWRHbGpZWFJsWkNJc0ltVnRZV2xzSWpvaWJHVmxhREE1TURjM1FHZHRZV2xzTG1OdmJTSXNJbVY0Y0NJNk1UYzFORGt5TkRJd015d2lhV0YwSWpveE56VTBPVEl3TmpBekxDSnBjMTloYm05dWVXMXZkWE1pT21aaGJITmxMQ0pwYzNNaU9pSm9kSFJ3Y3pvdkwyVm5jSFIxZEc5NlpHWmphR3hwYjNWbGNHaHNMbk4xY0dGaVlYTmxMbU52TDJGMWRHZ3ZkakVpTENKd2FHOXVaU0k2SWlJc0luSnZiR1VpT2lKaGRYUm9aVzUwYVdOaGRHVmtJaXdpYzJWemMybHZibDlwWkNJNklqWmhOREJtTURFM0xXRXlNamN0TkRaaVlpMDRZVEUzTFRSbE4yTmhNV0psWkdVNVlTSXNJbk4xWWlJNkltSmpOMlF6WkRZeExXUXdZelV0TkRjMU5DMDVaalkxTFRRME5XVmlZemszT1RNeVl5SXNJblZ6WlhKZmJXVjBZV1JoZEdFaU9uc2lZWFpoZEdGeVgzVnliQ0k2SW1oMGRIQnpPaTh2YkdnekxtZHZiMmRzWlhWelpYSmpiMjUwWlc1MExtTnZiUzloTDBGRFp6aHZZMHMzWVdwTU1YTkZYMGhmTmtKYVJUaEVNMTlPU0dzMUxYWktURnBZVlc0eWMwTmtjRk16VDJVdFUyWmFXVlpXWnoxek9UWXRZeUlzSW1WdFlXbHNJam9pYkdWbGFEQTVNRGMzUUdkdFlXbHNMbU52YlNJc0ltVnRZV2xzWDNabGNtbG1hV1ZrSWpwMGNuVmxMQ0ptYVhKemRGOXVZVzFsSWpvaWVYa2lMQ0ptZFd4c1gyNWhiV1VpT2lMc25iVHRuYXpzc0t3aUxDSnBjM01pT2lKb2RIUndjem92TDJGalkyOTFiblJ6TG1kdmIyZHNaUzVqYjIwaUxDSnNZWE4wWDI1aGJXVWlPaUo1ZVNJc0ltNWhiV1VpT2lMc25iVHRuYXpzc0t3aUxDSndhRzl1WlY5MlpYSnBabWxsWkNJNlptRnNjMlVzSW5CcFkzUjFjbVVpT2lKb2RIUndjem92TDJ4b015NW5iMjluYkdWMWMyVnlZMjl1ZEdWdWRDNWpiMjB2WVM5QlEyYzRiMk5MTjJGcVRERnpSVjlJWHpaQ1drVTRSRE5mVGtock5TMTJTa3hhV0ZWdU1uTkRaSEJUTTA5bExWTm1XbGxXVm1jOWN6azJMV01pTENKd2NtOW1hV3hsWDJsdFlXZGxJam9pYUhSMGNITTZMeTlsWjNCMGRYUnZlbVJtWTJoc2FXOTFaWEJvYkM1emRYQmhZbUZ6WlM1amJ5OXpkRzl5WVdkbEwzWXhMMjlpYW1WamRDOXdkV0pzYVdNdmFXMWhaMlZ6TDNCMVlteHBZeTlpWXpka00yUTJNUzFrTUdNMUxUUTNOVFF0T1dZMk5TMDBORFZsWW1NNU56a3pNbU12TUROZk9GOHhOelEwTmpFMk5UTXpNakV4TG5OMlp5SXNJbkJ5YjNacFpHVnlYMmxrSWpvaU1UQXlOVFl5TXpjME9UUXhPRE14T1Rnek16RTBJaXdpYzNWaUlqb2lNVEF5TlRZeU16YzBPVFF4T0RNeE9UZ3pNekUwSW4xOS42eVJENnRVajd4allKSzJXYThBN2RidXlmQkxYQ25Vc0R5ZndNQ2NKY2h3IiwidG9rZW5fdHlwZSI6ImJlYXJlciIsImV4cGlyZXNfaW4iOjM2MDAsImV4cGlyZXNfYXQiOjE3NTQ5MjQyMDMsInJlZnJlc2hfdG9rZW4iOiJ1cnRwenJjZHNwMjMiLCJ1c2VyIjp7ImlkIjoiYmM3ZDNkNjEtZDBjNS00NzU0LTlmNjUtNDQ1ZWJjOTc5MzJjIiwiYXVkIjoiYXV0aGVudGljYXRlZCIsInJvbGUiOiJhdXRoZW50aWNhdGVkIiwiZW1haWwiOiJsZWVoMDkwNzdAZ21haWwuY29tIiwiZW1haWxfY29uZmlybWVkX2F0IjoiMjAyNS0wNC0xMlQxNTowMzoxNC42MTA1MDNaIiwicGhvbmUiOiIiLCJjb25maXJtZWRfYXQiOiIyMDI1LTA0LTEyVDE1OjAzOjE0LjYxMDUwM1oiLCJsYXN0X3NpZ25faW5fYXQiOiIyMDI1LTA4LTA2VDE2OjE2OjQxLjc2Mzk0NFoiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCIsImdvb2dsZSJdfSwidXNlcl9tZXRhZGF0YSI6eyJhdmF0YXJfdXJsIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSzdhakwxc0VfSF82QlpFOEQzX05IazUtdkpMWlhVbjJzQ2RwUzNPZS1TZlpZVlZnPXM5Ni1jIiwiZW1haWwiOiJsZWVoMDkwNzdAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZ1bGxfbmFtZSI6IuydtO2drOywrCIsImlzcyI6Imh0dHBzOi8vYWNjb3VudHMuZ29vZ2xlLmNvbSIsIm5hbWUiOiLsnbTtnazssKwiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NLN2FqTDFzRV9IXzZCWkU4RDNfTkhrNS12SkxaWFVuMnNDZHBTM09lLVNmWllWVmc9czk2LWMiLCJwcm92aWRlcl9pZCI6IjEwMjU2MjM3NDk0MTgzMTk4MzMxNCIsInN1YiI6IjEwMjU2MjM3NDk0MTgzMTk4MzMxNCJ9LCJpZGVudGl0aWVzIjpbeyJpZGVudGl0eV9pZCI6ImFlZTE2YTBhLTliYjUtNDI3Yi05Mzk4LTllMWY2YmYwYWMyNiIsImlkIjoiYmM3ZDNkNjEtZDBjNS00NzU0LTlmNjUtNDQ1ZWJjOTc5MzJjIiwidXNlcl9pZCI6ImJjN2QzZDYxLWQwYzUtNDc1NC05ZjY1LTQ0NWViYzk3OTMyYyIsImlkZW50aXR5X2RhdGEiOnsiZW1haWwiOiJsZWVoMDkwNzdAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOmZhbHNlLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInN1YiI6ImJjN2QzZDYxLWQwYzUtNDc1NC05ZjY1LTQ0NWViYzk3OTMyYyJ9LCJwcm92aWRlciI6ImVtYWlsIiwibGFzdF9zaWduX2luX2F0IjoiMjAyNS0wNC0xMlQxNTowMzoxNC42MDUwMDlaIiwiY3JlYXRlZF9hdCI6IjIwMjUtMDQtMTJUMTU6MDM6MTQuNjA1MDYzWiIsInVwZGF0ZWRfYXQiOiIyMDI1LTA0LTEyVDE1OjAzOjE0LjYwNTA2M1oiLCJlbWFpbCI6ImxlZWgwOTA3N0BnbWFpbC5jb20ifSx7ImlkZW50aXR5X2lkIjoiNTJhMTAzYTQtMmQ3MS00NDVmLTk3MWMtZmI2ODRmYWYwYzI1IiwiaWQiOiIxMDI1NjIzNzQ5NDE4MzE5ODMzMTQiLCJ1c2VyX2lkIjoiYmM3ZDNkNjEtZDBjNS00NzU0LTlmNjUtNDQ1ZWJjOTc5MzJjIiwiaWRlbnRpdHlfZGF0YSI6eyJhdmF0YXJfdXJsIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSzdhakwxc0VfSF82QlpFOEQzX05IazUtdkpMWlhVbjJzQ2RwUzNPZS1TZlpZVlZnPXM5Ni1jIiwiZW1haWwiOiJsZWVoMDkwNzdAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZ1bGxfbmFtZSI6IuydtO2drOywrCIsImlzcyI6Imh0dHBzOi8vYWNjb3VudHMuZ29vZ2xlLmNvbSIsIm5hbWUiOiLsnbTtnazssKwiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NLN2FqTDFzRV9IXzZCWkU4RDNfTkhrNS12SkxaWFVuMnNDZHBTM09lLVNmWllWVmc9czk2LWMiLCJwcm92aWRlcl9pZCI6IjEwMjU2MjM3NDk0MTgzMTk4MzMxNCIsInN1YiI6IjEwMjU2MjM3NDk0MTgzMTk4MzMxNCJ9LCJwcm92aWRlciI6Imdvb2dsZSIsImxhc3Rfc2lnbl9pbl9hdCI6IjIwMjUtMDQtMjBUMTU6NDc6MjkuNjQ1MDYyWiIsImNyZWF0ZWRfYXQiOiIyMDI1LTA0LTIwVDE1OjQ3OjI5LjY0NTExM1oiLCJ1cGRhdGVkX2F0IjoiMjAyNS0wOC0wNlQxNjoxNjozOS45NDI3MzhaIiwiZW1haWwiOiJsZWVoMDkwNzdAZ21haWwuY29tIn1dLCJjcmVhdGVkX2F0IjoiMjAyNS0wNC0xMlQxNTowMzoxNC41ODc3MTlaIiwidXBkYXRlZF9hdCI6IjIwMjUtMDgtMTFUMTM6NTY6NDMuNjgxODVaIiwiaXNfYW5vbnltb3VzIjpmYWxzZX19
+
+
+## Step 2 base64 decode value :
+```json
+{"access_token":"eyJhbGciOiJIUzI1NiIsImtpZCI6IjV5L3Y0STFXNFM0UU1tMTYiLCJ0eXAiOiJKV1QifQ.eyJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJvYXV0aCIsInRpbWVzdGFtcCI6MTc1NDQ5NzAwMX1dLCJhcHBfbWV0YWRhdGEiOnsib3JnYW5pemF0aW9uX2lkIjoiMmM4MTgyY2EtYmYyMi00NjA1LWJjZTktMDU4ZTQ5NDNhNmM1IiwicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCIsImdvb2dsZSJdLCJyb2xlIjoiYWRtaW4ifSwiYXVkIjoiYXV0aGVudGljYXRlZCIsImVtYWlsIjoibGVlaDA5MDc3QGdtYWlsLmNvbSIsImV4cCI6MTc1NDkyNDIwMywiaWF0IjoxNzU0OTIwNjAzLCJpc19hbm9ueW1vdXMiOmZhbHNlLCJpc3MiOiJodHRwczovL2VncHR1dG96ZGZjaGxpb3VlcGhsLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJwaG9uZSI6IiIsInJvbGUiOiJhdXRoZW50aWNhdGVkIiwic2Vzc2lvbl9pZCI6IjZhNDBmMDE3LWEyMjctNDZiYi04YTE3LTRlN2NhMWJlZGU5YSIsInN1YiI6ImJjN2QzZDYxLWQwYzUtNDc1NC05ZjY1LTQ0NWViYzk3OTMyYyIsInVzZXJfbWV0YWRhdGEiOnsiYXZhdGFyX3VybCI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0s3YWpMMXNFX0hfNkJaRThEM19OSGs1LXZKTFpYVW4yc0NkcFMzT2UtU2ZaWVZWZz1zOTYtYyIsImVtYWlsIjoibGVlaDA5MDc3QGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJmaXJzdF9uYW1lIjoieXkiLCJmdWxsX25hbWUiOiLsnbTtnazssKwiLCJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJsYXN0X25hbWUiOiJ5eSIsIm5hbWUiOiLsnbTtnazssKwiLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NLN2FqTDFzRV9IXzZCWkU4RDNfTkhrNS12SkxaWFVuMnNDZHBTM09lLVNmWllWVmc9czk2LWMiLCJwcm9maWxlX2ltYWdlIjoiaHR0cHM6Ly9lZ3B0dXRvemRmY2hsaW91ZXBobC5zdXBhYmFzZS5jby9zdG9yYWdlL3YxL29iamVjdC9wdWJsaWMvaW1hZ2VzL3B1YmxpYy9iYzdkM2Q2MS1kMGM1LTQ3NTQtOWY2NS00NDVlYmM5NzkzMmMvMDNfOF8xNzQ0NjE2NTMzMjExLnN2ZyIsInByb3ZpZGVyX2lkIjoiMTAyNTYyMzc0OTQxODMxOTgzMzE0Iiwic3ViIjoiMTAyNTYyMzc0OTQxODMxOTgzMzE0In19.6yRD6tUj7xjYJK2Wa8A7dbuyfBLXCnUsDyfwMCcJchw","token_type":"bearer","expires_in":3600,"expires_at":1754924203,"refresh_token":"urtpzrcdsp23","user":{"id":"bc7d3d61-d0c5-4754-9f65-445ebc97932c","aud":"authenticated","role":"authenticated","email":"leeh09077@gmail.com","email_confirmed_at":"2025-04-12T15:03:14.610503Z","phone":"","confirmed_at":"2025-04-12T15:03:14.610503Z","last_sign_in_at":"2025-08-06T16:16:41.763944Z","app_metadata":{"provider":"email","providers":["email","google"]},"user_metadata":{"avatar_url":"https://lh3.googleusercontent.com/a/ACg8ocK7ajL1sE_H_6BZE8D3_NHk5-vJLZXUn2sCdpS3Oe-SfZYVVg=s96-c","email":"leeh09077@gmail.com","email_verified":true,"full_name":"이희찬","iss":"https://accounts.google.com","name":"이희찬","phone_verified":false,"picture":"https://lh3.googleusercontent.com/a/ACg8ocK7ajL1sE_H_6BZE8D3_NHk5-vJLZXUn2sCdpS3Oe-SfZYVVg=s96-c","provider_id":"102562374941831983314","sub":"102562374941831983314"},"identities":[{"identity_id":"aee16a0a-9bb5-427b-9398-9e1f6bf0ac26","id":"bc7d3d61-d0c5-4754-9f65-445ebc97932c","user_id":"bc7d3d61-d0c5-4754-9f65-445ebc97932c","identity_data":{"email":"leeh09077@gmail.com","email_verified":false,"phone_verified":false,"sub":"bc7d3d61-d0c5-4754-9f65-445ebc97932c"},"provider":"email","last_sign_in_at":"2025-04-12T15:03:14.605009Z","created_at":"2025-04-12T15:03:14.605063Z","updated_at":"2025-04-12T15:03:14.605063Z","email":"leeh09077@gmail.com"},{"identity_id":"52a103a4-2d71-445f-971c-fb684faf0c25","id":"102562374941831983314","user_id":"bc7d3d61-d0c5-4754-9f65-445ebc97932c","identity_data":{"avatar_url":"https://lh3.googleusercontent.com/a/ACg8ocK7ajL1sE_H_6BZE8D3_NHk5-vJLZXUn2sCdpS3Oe-SfZYVVg=s96-c","email":"leeh09077@gmail.com","email_verified":true,"full_name":"이희찬","iss":"https://accounts.google.com","name":"이희찬","phone_verified":false,"picture":"https://lh3.googleusercontent.com/a/ACg8ocK7ajL1sE_H_6BZE8D3_NHk5-vJLZXUn2sCdpS3Oe-SfZYVVg=s96-c","provider_id":"102562374941831983314","sub":"102562374941831983314"},"provider":"google","last_sign_in_at":"2025-04-20T15:47:29.645062Z","created_at":"2025-04-20T15:47:29.645113Z","updated_at":"2025-08-06T16:16:39.942738Z","email":"leeh09077@gmail.com"}],"created_at":"2025-04-12T15:03:14.587719Z","updated_at":"2025-08-11T13:56:43.68185Z","is_anonymous":false}}
+```
+
+## Step 3 access token jwt decode value :
+```json
+{
+  "aal": "aal1",
+  "amr": [
+    {
+      "method": "oauth",
+      "timestamp": 1754497001
+    }
+  ],
+  "app_metadata": {
+    "organization_id": "2c8182ca-bf22-4605-bce9-058e4943a6c5",
+    "provider": "email",
+    "providers": [
+      "email",
+      "google"
+    ],
+    "role": "admin"
+  },
+  "aud": "authenticated",
+  "email": "leeh09077@gmail.com",
+  "exp": 1754924203,
+  "iat": 1754920603,
+  "is_anonymous": false,
+  "iss": "https://egptutozdfchliouephl.supabase.co/auth/v1",
+  "phone": "",
+  "role": "authenticated",
+  "session_id": "6a40f017-a227-46bb-8a17-4e7ca1bede9a",
+  "sub": "bc7d3d61-d0c5-4754-9f65-445ebc97932c",
+  "user_metadata": {
+    "avatar_url": "https://lh3.googleusercontent.com/a/ACg8ocK7ajL1sE_H_6BZE8D3_NHk5-vJLZXUn2sCdpS3Oe-SfZYVVg=s96-c",
+    "email": "leeh09077@gmail.com",
+    "email_verified": true,
+    "first_name": "yy",
+    "full_name": "이희찬",
+    "iss": "https://accounts.google.com",
+    "last_name": "yy",
+    "name": "이희찬",
+    "phone_verified": false,
+    "picture": "https://lh3.googleusercontent.com/a/ACg8ocK7ajL1sE_H_6BZE8D3_NHk5-vJLZXUn2sCdpS3Oe-SfZYVVg=s96-c",
+    "profile_image": "https://egptutozdfchliouephl.supabase.co/storage/v1/object/public/images/public/bc7d3d61-d0c5-4754-9f65-445ebc97932c/03_8_1744616533211.svg",
+    "provider_id": "102562374941831983314",
+    "sub": "102562374941831983314"
+  }
+}
+```
