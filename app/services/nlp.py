@@ -1,14 +1,35 @@
 """
 한국어 NLP 서비스
-Korean text processing using konlpy (Okt)
+Korean text processing with fallback for deployment environments
 """
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 from collections import Counter
 import re
-from konlpy.tag import Okt
 import structlog
 
 logger = structlog.get_logger()
+
+# Try importing Korean NLP libraries, fallback to basic text processing
+try:
+    from konlpy.tag import Okt
+    KONLPY_AVAILABLE = True
+    logger.info("Korean NLP library (konlpy) loaded successfully")
+except ImportError:
+    logger.warning("konlpy not available, using fallback text processing")
+    KONLPY_AVAILABLE = False
+    Okt = None
+
+# Try importing NLTK for basic text processing
+try:
+    import nltk
+    import regex as re_advanced
+    NLTK_AVAILABLE = True
+    logger.info("NLTK and regex libraries loaded for fallback processing")
+except ImportError:
+    logger.warning("NLTK not available, using basic regex processing")
+    NLTK_AVAILABLE = False
+    nltk = None
+    re_advanced = None
 
 # Okt 인스턴스 (싱글톤)
 _okt_instance = None
@@ -100,12 +121,17 @@ KOREAN_STOPWORDS = {
 }
 
 
-def initialize_okt() -> Okt:
+def initialize_okt() -> Optional[Okt]:
     """
     Okt 인스턴스를 초기화하고 반환합니다.
     싱글톤 패턴으로 구현되어 있어 한 번만 초기화됩니다.
+    konlpy가 없으면 None을 반환합니다.
     """
     global _okt_instance
+    if not KONLPY_AVAILABLE:
+        logger.warning("konlpy not available, cannot initialize Okt")
+        return None
+    
     if _okt_instance is None:
         logger.info("Initializing Okt instance")
         _okt_instance = Okt()
@@ -147,16 +173,15 @@ def normalize_text(text: str) -> str:
 def extract_nouns(text: str, normalize: bool = True) -> List[str]:
     """
     텍스트에서 명사를 추출합니다.
+    konlpy가 없는 경우 기본 토큰화를 사용합니다.
 
     Args:
         text: 분석할 텍스트
         normalize: 텍스트 정규화 여부
 
     Returns:
-        명사 리스트
+        명사 리스트 (또는 fallback의 경우 단어 리스트)
     """
-    okt = initialize_okt()
-
     if normalize:
         text = normalize_text(text)
 
@@ -164,17 +189,24 @@ def extract_nouns(text: str, normalize: bool = True) -> List[str]:
     if not text:
         return []
 
-    try:
-        # 명사 추출
-        nouns = okt.nouns(text)
-
-        # 한 글자 명사 제거 (선택적)
-        nouns = [noun for noun in nouns if len(noun) > 1]
-
-        return nouns
-    except Exception as e:
-        logger.error(f"Error extracting nouns: {e}")
-        return []
+    # konlpy 사용 가능한 경우
+    if KONLPY_AVAILABLE:
+        okt = initialize_okt()
+        if okt is None:
+            return _fallback_extract_words(text)
+        
+        try:
+            # 명사 추출
+            nouns = okt.nouns(text)
+            # 한 글자 명사 제거 (선택적)
+            nouns = [noun for noun in nouns if len(noun) > 1]
+            return nouns
+        except Exception as e:
+            logger.error(f"Error extracting nouns: {e}")
+            return _fallback_extract_words(text)
+    else:
+        # fallback to basic word extraction
+        return _fallback_extract_words(text)
 
 
 def remove_stopwords(words: List[str], custom_stopwords: List[str] = None) -> List[str]:
@@ -304,3 +336,37 @@ def get_text_stats(text: str) -> Dict[str, int]:
         "total_nouns": len(nouns),
         "unique_nouns": len(set(nouns)),
     }
+
+
+def _fallback_extract_words(text: str) -> List[str]:
+    """
+    Fallback 단어 추출 함수 (konlpy 없이 기본 토큰화)
+    
+    Args:
+        text: 분석할 텍스트
+    
+    Returns:
+        추출된 단어 리스트
+    """
+    logger.info("Using fallback word extraction (no Korean NLP)")
+    
+    # 기본 토큰화 - 공백 기준으로 분리
+    words = text.split()
+    
+    # 한글과 영문만 포함된 단어 필터링, 2글자 이상
+    filtered_words = []
+    for word in words:
+        # 한글 또는 영문이 포함된 2글자 이상 단어만 추출
+        if re_advanced and re_advanced.search(r'[가-힣a-zA-Z]', word):
+            # 특수문자 제거
+            clean_word = re_advanced.sub(r'[^가-힣a-zA-Z0-9]', '', word)
+            if len(clean_word) > 1:
+                filtered_words.append(clean_word)
+        else:
+            # regex 없이 기본 정규식 사용
+            if re.search(r'[가-힣a-zA-Z]', word):
+                clean_word = re.sub(r'[^가-힣a-zA-Z0-9]', '', word)
+                if len(clean_word) > 1:
+                    filtered_words.append(clean_word)
+    
+    return filtered_words
