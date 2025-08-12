@@ -1,5 +1,19 @@
 # 📘 API Design Canvas & Spec
 
+## 📊 구현 현황 (2025-08-12)
+- ✅ **배포 완료**: Vercel에 성공적으로 배포
+- ✅ **인증 시스템**: Supabase JWT 토큰 검증 구현
+- ✅ **NLP 서비스**: 한국어 형태소 분석 (konlpy/Okt) + fallback
+- ✅ **캐싱 시스템**: Redis 캐싱 (serverless 최적화)
+- ✅ **Health Check**: 서비스 상태 모니터링
+
+### 구현된 엔드포인트
+- `GET /` - 루트 엔드포인트
+- `GET /api/v1/health` - 헬스체크
+- `POST /api/v1/analyze/text` - 텍스트 분석
+- `POST /api/v1/analyze/multiple` - 다중 텍스트 분석
+- `GET /api/v1/analyze/cache/{cache_key}` - 캐시 조회
+
 ## 1. Canvas
 
 ### 1.1 목적
@@ -36,10 +50,10 @@
 
 ---
 
-## 2. Endpoints (간단 명세)
+## 2. Endpoints (구현 완료)
 
-### 2.1 형태소 분석 및 단어 빈도 (SIMPLIFIED)
-**endpoint :** `/api/v1/analyze/word-frequency`
+### 2.1 텍스트 분석 ✅
+**endpoint :** `/api/v1/analyze/text`
 
 **기능 :** 텍스트 입력으로 한국어 형태소 분석 후 단어 빈도 계산. 불용어 제거 포함.
 
@@ -136,10 +150,10 @@
 
 ---
 
-### 2.4 헬스체크
+### 2.4 헬스체크 ✅
 **endpoint :** `/api/v1/health`
 
-**기능 :** 서비스 상태 및 데이터베이스 연결 확인
+**기능 :** 서비스 상태 및 데이터베이스 연결 확인 (Serverless 최적화)
 
 **method :** GET
 
@@ -148,15 +162,20 @@
 **response :**
 ```json
 {
-  "status": "healthy",
+  "status": "healthy",  // Redis 실패시에도 Supabase만 정상이면 healthy
   "version": "1.0.0",
   "services": {
-    "redis": "healthy",
-    "supabase": "healthy"
+    "redis": "healthy",    // serverless에서는 non-critical
+    "supabase": "healthy"  // 필수 서비스
   },
   "uptime_seconds": 3600
 }
 ```
+
+**특징:**
+- Serverless 환경에서 Redis를 선택적 서비스로 처리
+- 병렬 health check으로 성능 향상
+- 타임아웃 처리로 hanging 방지
 
 
 ---
@@ -181,13 +200,43 @@
 
 ---
 
-## 4. 비고
+## 4. 구현 세부사항
 
-이 간소화된 API는 핵심 텍스트 분석 기능에 집중합니다:
-- 텍스트 입력 → 형태소 분석 → 단어 빈도 반환
-- DB 데이터 범위 분석 → 캐시된 단어 빈도 반환  
-- 단어 리스트 → 유사도 기반 그룹핑
-- 시스템 상태 확인
+### 4.1 인증 시스템
+- **Supabase JWT 토큰 지원**
+  - Bearer Token
+  - Session 토큰 (sb-access-token, sb-refresh-token)
+  - Custom auth hook 토큰
+- **다양한 토큰 형식 자동 감지**
+
+### 4.2 NLP 처리
+- **Production (Vercel)**
+  - konlpy 사용 불가 (jpype1 컴파일 오류)
+  - Fallback: 기본 regex 토큰화
+  - nltk 라이브러리 지원
+  
+- **Development**
+  - konlpy/Okt 완전 지원
+  - 정확한 한국어 형태소 분석
+
+### 4.3 Redis 캐싱
+- **Serverless 최적화**
+  - Connection pooling
+  - Health check with timeout
+  - Event loop 처리
+  - 연결 실패시 graceful degradation
+
+### 4.4 배포
+- **Vercel 배포 완료**
+  - vercel.json 설정
+  - requirements.txt 최적화
+  - 환경 변수 설정 완료
+
+## 5. 향후 개선사항
+- Rate limiting 구현
+- 더 정교한 한국어 NLP (Cloud API 활용)
+- 실시간 분석 WebSocket 지원
+- 분석 결과 시각화 API
 
 모든 응답은 Pydantic 스키마로 검증되며, 단어 빈도는 `[단어, 횟수]` 형태의 배열로 일관성있게 반환됩니다.
 "
