@@ -324,18 +324,36 @@ async def _fetch_posts_from_db(
     try:
         supabase = get_supabase_client()
 
-        # posts 테이블 쿼리 구성
-        query = supabase.table("posts").select("id, content, created_at, user_id")
+        # posts 테이블 쿼리 구성 - JOIN을 통한 journey/week 필터링
+        if journey_id or journey_week_id:
+            # journey_mission_instances를 통해 posts를 필터링
+            query = supabase.table("posts").select("""
+                id, content, created_at, user_id,
+                journey_mission_instances!inner(
+                    journey_weeks!inner(
+                        journey_id,
+                        id
+                    )
+                )
+            """)
+            
+            # journey_id 필터링
+            if journey_id:
+                query = query.eq("journey_mission_instances.journey_weeks.journey_id", journey_id)
+            
+            # journey_week_id 필터링  
+            if journey_week_id:
+                query = query.eq("journey_mission_instances.journey_weeks.id", journey_week_id)
+        else:
+            # 단순 posts 쿼리
+            query = supabase.table("posts").select("id, content, created_at, user_id")
 
-        # 필터 적용
+        # 기타 필터 적용
         if user_id:
             query = query.eq("user_id", user_id)
 
         if mission_instance_id:
             query = query.eq("mission_instance_id", mission_instance_id)
-
-        # TODO: journey_id, journey_week_id 필터링
-        # 실제 데이터베이스 스키마에 맞게 조정 필요
 
         result = query.execute()
 
