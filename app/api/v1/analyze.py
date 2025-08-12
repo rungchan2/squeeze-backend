@@ -207,3 +207,126 @@ async def invalidate_journey_week_cache_endpoint(
     except Exception as e:
         logger.error(f"Error invalidating journey week cache: {e}")
         raise HTTPException(status_code=500, detail="캐시 무효화 중 오류가 발생했습니다")
+
+
+@router.get(
+    "/debug/journey-week/{journey_week_id}",
+    summary="Journey Week 데이터베이스 쿼리 디버깅",
+    description="각 단계별 쿼리 결과를 확인합니다.",
+)
+async def debug_journey_week_query(
+    journey_week_id: str,
+    current_user: dict = Depends(require_teacher_role),
+):
+    """
+    Journey Week 데이터 조회 디버깅 엔드포인트
+    """
+    from app.db.supabase import get_supabase_client
+    
+    try:
+        supabase = get_supabase_client()
+        debug_info = {}
+        
+        # 1단계: journey_week_id로 mission_instance_ids 조회
+        logger.info(f"[DEBUG] Step 1: Querying mission instances for journey_week_id: {journey_week_id}")
+        mission_query = supabase.table("journey_mission_instances").select("id, journey_week_id").eq("journey_week_id", journey_week_id)
+        mission_result = mission_query.execute()
+        
+        debug_info["step1_mission_instances"] = {
+            "query": f"SELECT id, journey_week_id FROM journey_mission_instances WHERE journey_week_id = '{journey_week_id}'",
+            "count": len(mission_result.data) if mission_result.data else 0,
+            "data": mission_result.data[:3] if mission_result.data else []  # 처음 3개만
+        }
+        
+        if not mission_result.data:
+            debug_info["error"] = "No mission instances found"
+            return debug_info
+            
+        # 2단계: 각 mission_instance_id로 posts 조회
+        mission_ids = [item["id"] for item in mission_result.data]
+        debug_info["mission_ids"] = mission_ids
+        
+        all_posts = []
+        posts_by_mission = {}
+        
+        for mission_id in mission_ids:
+            logger.info(f"[DEBUG] Step 2: Querying posts for mission_id: {mission_id}")
+            posts_query = supabase.table("posts").select("id, content, answers_data, created_at, user_id").eq("mission_instance_id", mission_id)
+            posts_result = posts_query.execute()
+            
+            posts_count = len(posts_result.data) if posts_result.data else 0
+            posts_by_mission[mission_id] = {
+                "count": posts_count,
+                "posts": posts_result.data[:2] if posts_result.data else []  # 처음 2개만
+            }
+            
+            if posts_result.data:
+                all_posts.extend(posts_result.data)
+                
+        debug_info["step2_posts_by_mission"] = posts_by_mission
+        debug_info["total_posts_found"] = len(all_posts)
+        
+        # 3단계: 텍스트 추출 테스트
+        texts = []
+        text_sources = []
+        
+        for i, post in enumerate(all_posts[:3]):  # 처음 3개 posts만 분석
+            post_texts = []
+            
+            # content 필드에서 텍스트 추출
+            if post.get("content"):
+                post_texts.append({
+                    "source": "content",
+                    "length": len(post["content"]),
+                    "preview": post["content"][:100] + "..." if len(post["content"]) > 100 else post["content"]
+                })
+                texts.append(post["content"])
+            
+            # answers_data에서 텍스트 추출
+            answers_data = post.get("answers_data")
+            if answers_data and isinstance(answers_data, dict):
+                answers = answers_data.get("answers", [])
+                for j, answer in enumerate(answers):
+                    answer_text = answer.get("answer_text", "")
+                    if answer_text and answer_text.strip():
+                        post_texts.append({
+                            "source": f"answers_data.answers[{j}].answer_text",
+                            "length": len(answer_text),
+                            "preview": answer_text[:200] + "..." if len(answer_text) > 200 else answer_text
+                        })
+                        texts.append(answer_text)
+            
+            text_sources.append({
+                "post_id": post["id"],
+                "extracted_texts": post_texts
+            })
+            
+        debug_info["step3_text_extraction"] = {
+            "total_texts_extracted": len(texts),
+            "text_sources": text_sources
+        }
+        
+        # 4단계: NLP 분석 테스트 (간단한 단어 개수만)
+        if texts:
+            from app.services.nlp import analyze_multiple_texts
+            try:
+                word_frequency = analyze_multiple_texts(texts=texts, top_n=10, min_count=1)
+                debug_info["step4_nlp_analysis"] = {
+                    "success": True,
+                    "word_count": len(word_frequency),
+                    "top_words": word_frequency[:5]
+                }
+            except Exception as nlp_error:
+                debug_info["step4_nlp_analysis"] = {
+                    "success": False,
+                    "error": str(nlp_error)
+                }
+        
+        return debug_info
+        
+    except Exception as e:
+        logger.error(f"Debug endpoint error: {e}", exc_info=True)
+        return {
+            "error": str(e),
+            "error_type": type(e).__name__
+        }
