@@ -15,13 +15,27 @@ settings = get_settings()
 
 
 def setup_cors(app):
-    """CORS 미들웨어 설정"""
+    """CORS 미들웨어 설정 - localhost 기본 허용 + 환경변수 origins"""
+    allowed_origins = settings.cors_origins
+    
+    logger.info(f"Setting up CORS with origins: {allowed_origins}")
+    
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.BACKEND_CORS_ORIGINS,
+        allow_origins=allowed_origins,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=[
+            "Content-Type",
+            "Authorization", 
+            "Accept",
+            "Origin",
+            "User-Agent",
+            "X-Requested-With",
+            "sb-access-token",
+            "sb-refresh-token"
+        ],
+        expose_headers=["*"],
     )
 
 
