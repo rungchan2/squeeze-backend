@@ -326,24 +326,46 @@ async def _fetch_posts_from_db(
 
         # posts 테이블 쿼리 구성 - JOIN을 통한 journey/week 필터링
         if journey_id or journey_week_id:
-            # journey_mission_instances를 통해 posts를 필터링
-            query = supabase.table("posts").select("""
-                id, content, created_at, user_id,
-                journey_mission_instances!inner(
-                    journey_weeks!inner(
-                        journey_id,
-                        id
-                    )
-                )
-            """)
-            
-            # journey_id 필터링
+            # RPC를 사용하여 JOIN 쿼리 실행
+            filter_params = {}
             if journey_id:
-                query = query.eq("journey_mission_instances.journey_weeks.journey_id", journey_id)
-            
-            # journey_week_id 필터링  
+                filter_params["p_journey_id"] = journey_id
             if journey_week_id:
-                query = query.eq("journey_mission_instances.journey_weeks.id", journey_week_id)
+                filter_params["p_journey_week_id"] = journey_week_id
+            
+            # Custom RPC 함수 대신 직접 쿼리 실행
+            # mission_instance_id를 먼저 조회한 후 posts 필터링
+            if journey_week_id:
+                # journey_week_id로 mission_instance_ids 조회
+                mission_query = supabase.table("journey_mission_instances").select("id").eq("journey_week_id", journey_week_id)
+                mission_result = mission_query.execute()
+                
+                if mission_result.data:
+                    mission_ids = [item["id"] for item in mission_result.data]
+                    # mission_ids로 posts 조회
+                    query = supabase.table("posts").select("id, content, created_at, user_id").in_("mission_instance_id", mission_ids)
+                else:
+                    # mission_instance가 없으면 빈 결과 반환
+                    return []
+            elif journey_id:
+                # journey_id로 journey_week_ids 먼저 조회
+                week_query = supabase.table("journey_weeks").select("id").eq("journey_id", journey_id)
+                week_result = week_query.execute()
+                
+                if week_result.data:
+                    week_ids = [item["id"] for item in week_result.data]
+                    # week_ids로 mission_instance_ids 조회
+                    mission_query = supabase.table("journey_mission_instances").select("id").in_("journey_week_id", week_ids)
+                    mission_result = mission_query.execute()
+                    
+                    if mission_result.data:
+                        mission_ids = [item["id"] for item in mission_result.data]
+                        # mission_ids로 posts 조회
+                        query = supabase.table("posts").select("id, content, created_at, user_id").in_("mission_instance_id", mission_ids)
+                    else:
+                        return []
+                else:
+                    return []
         else:
             # 단순 posts 쿼리
             query = supabase.table("posts").select("id, content, created_at, user_id")
