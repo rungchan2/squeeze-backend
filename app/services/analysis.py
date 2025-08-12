@@ -19,7 +19,7 @@ from app.services.cache import (
     set_cached_value,
     get_cache_key,
 )
-from app.db.supabase import get_supabase_client
+from app.db.supabase import get_supabase_client, get_supabase_admin_client
 from app.core.exceptions import TextAnalysisError, ValidationError
 
 logger = structlog.get_logger()
@@ -341,7 +341,8 @@ async def _fetch_posts_from_db(
     데이터베이스에서 posts를 조회합니다.
     """
     try:
-        supabase = get_supabase_client()
+        # RLS를 우회하여 모든 데이터에 접근하기 위해 admin client 사용
+        supabase = get_supabase_admin_client()
 
         # posts 테이블 쿼리 구성 - 올바른 Supabase client 문법 사용
         if journey_id or journey_week_id:
