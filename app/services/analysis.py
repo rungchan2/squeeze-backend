@@ -411,9 +411,9 @@ async def _fetch_posts_from_db(
             return []
 
     except Exception as e:
-        logger.error(f"Error fetching posts from database: {e}")
-        # 개발 중에는 임시 데이터 반환
-        return _get_mock_posts_data()
+        logger.error(f"Error fetching posts from database: {e}", exc_info=True)
+        # 예외를 다시 발생시켜서 실제 문제를 확인
+        raise e
 
 
 def _get_mock_posts_data() -> List[Dict[str, Any]]:
