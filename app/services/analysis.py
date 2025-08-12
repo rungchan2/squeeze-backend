@@ -406,15 +406,15 @@ def _determine_analysis_scope(
     분석 범위를 결정합니다.
     """
     if user_id:
-        return "USER"
+        return "user"
     elif mission_instance_id:
-        return "MISSION_INSTANCE"
+        return "mission_instance"
     elif journey_week_id:
-        return "JOURNEY_WEEK"
+        return "journey_week"
     elif journey_id:
-        return "JOURNEY"
+        return "journey"
     else:
-        return "UNKNOWN"
+        return "unknown"
 
 
 def _build_range_info(

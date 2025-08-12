@@ -112,8 +112,11 @@ async def analyze_range_word_frequency(
 
         from datetime import datetime
 
+        # scope 값을 소문자로 변환하여 enum과 매칭
+        scope_value = result["scope"].lower() if isinstance(result["scope"], str) else result["scope"]
+        
         return RangeAnalysisResponse(
-            scope=AnalysisScope(result["scope"]),
+            scope=AnalysisScope(scope_value),
             range=result["range"],
             cache_hit=result["cache_hit"],
             word_frequency=result["word_frequency"],

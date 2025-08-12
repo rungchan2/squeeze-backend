@@ -24,6 +24,7 @@ class AnalysisScope(str, Enum):
     JOURNEY_WEEK = "journey_week"
     MISSION_INSTANCE = "mission_instance"
     USER = "user"
+    UNKNOWN = "unknown"
 
 
 # Base Models

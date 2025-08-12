@@ -6,13 +6,15 @@
 - ✅ **NLP 서비스**: 한국어 형태소 분석 (konlpy/Okt) + fallback
 - ✅ **캐싱 시스템**: Redis 캐싱 (serverless 최적화)
 - ✅ **Health Check**: 서비스 상태 모니터링
+- ✅ **범위별 분석**: journey_id/journey_week_id 필터링 구현 완료
+- ✅ **CORS 설정**: 환경변수 기반 CORS origins 지원
 
 ### 구현된 엔드포인트
 - `GET /` - 루트 엔드포인트
-- `GET /api/v1/health` - 헬스체크
-- `POST /api/v1/analyze/text` - 텍스트 분석
-- `POST /api/v1/analyze/multiple` - 다중 텍스트 분석
-- `GET /api/v1/analyze/cache/{cache_key}` - 캐시 조회
+- `GET /api/v1/health` - 헬스체크 ✅
+- `POST /api/v1/analyze/word-frequency` - 단일 텍스트 단어 빈도 분석 ✅
+- `GET /api/v1/analyze/range-word-frequency` - 범위별 단어 빈도 분석 ✅
+- `POST /api/v1/analyze/group-words` - 단어 그룹핑 ✅
 
 ## 1. Canvas
 
@@ -52,8 +54,8 @@
 
 ## 2. Endpoints (구현 완료)
 
-### 2.1 텍스트 분석 ✅
-**endpoint :** `/api/v1/analyze/text`
+### 2.1 단일 텍스트 단어 빈도 분석 ✅
+**endpoint :** `/api/v1/analyze/word-frequency`
 
 **기능 :** 텍스트 입력으로 한국어 형태소 분석 후 단어 빈도 계산. 불용어 제거 포함.
 
@@ -84,14 +86,19 @@
 
 ---
 
-### 2.2 범위별 단어 빈도 분석 (CACHED)
+### 2.2 범위별 단어 빈도 분석 ✅ (CACHED)
 **endpoint :** `/api/v1/analyze/range-word-frequency`
 
-**기능 :** journey/week/mission/student 범위별 posts 데이터에서 단어 빈도 분석. 캐시 우선.
+**기능 :** journey/week/mission/student 범위별 posts 데이터에서 단어 빈도 분석. 캐시 우선. JOIN 쿼리를 통한 정확한 필터링 구현.
 
 **method :** GET
 
 **body, params :** query → journey_id, journey_week_id, mission_instance_id, user_id, top_n, min_count, force_refresh
+
+**구현 특징:**
+- journey_mission_instances → journey_weeks JOIN을 통한 정확한 필터링
+- AnalysisScope enum과 호환되는 소문자 scope 값 반환
+- 캐시 미스 시 자동으로 데이터베이스에서 조회 후 분석
 
 **response :**
 ```json
@@ -112,7 +119,7 @@
 
 ---
 
-### 2.3 단어 그룹핑
+### 2.3 단어 그룹핑 ✅
 **endpoint :** `/api/v1/analyze/group-words`
 
 **기능 :** 단어 리스트를 유사도 기반으로 그룹화
@@ -231,6 +238,7 @@
   - vercel.json 설정
   - requirements.txt 최적화
   - 환경 변수 설정 완료
+  - CORS 환경변수 지원 (ALLOWED_ORIGINS)
 
 ## 5. 향후 개선사항
 - Rate limiting 구현
