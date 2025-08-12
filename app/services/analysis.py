@@ -172,8 +172,21 @@ async def analyze_posts_range(
                 "source_texts": [],
             }
 
-        # 텍스트 추출
-        texts = [post.get("content", "") for post in posts_data if post.get("content")]
+        # 텍스트 추출 - answers_data와 content 모두에서 추출
+        texts = []
+        for post in posts_data:
+            # content 필드에서 텍스트 추출
+            if post.get("content"):
+                texts.append(post["content"])
+            
+            # answers_data에서 텍스트 추출
+            answers_data = post.get("answers_data")
+            if answers_data and isinstance(answers_data, dict):
+                answers = answers_data.get("answers", [])
+                for answer in answers:
+                    answer_text = answer.get("answer_text", "")
+                    if answer_text and answer_text.strip():
+                        texts.append(answer_text)
 
         if not texts:
             logger.warning("No text content found in posts")
@@ -347,7 +360,7 @@ async def _fetch_posts_from_db(
                     # 각 mission_id에 대해 posts 조회 (in 연산자 문제 회피)
                     all_posts = []
                     for mission_id in mission_ids:
-                        posts_query = supabase.table("posts").select("id, content, created_at, user_id").eq("mission_instance_id", mission_id)
+                        posts_query = supabase.table("posts").select("id, content, answers_data, created_at, user_id").eq("mission_instance_id", mission_id)
                         posts_result = posts_query.execute()
                         
                         if posts_result.data:
@@ -379,7 +392,7 @@ async def _fetch_posts_from_db(
                         if mission_result.data:
                             for mission_data in mission_result.data:
                                 mission_id = mission_data["id"]
-                                posts_query = supabase.table("posts").select("id, content, created_at, user_id").eq("mission_instance_id", mission_id)
+                                posts_query = supabase.table("posts").select("id, content, answers_data, created_at, user_id").eq("mission_instance_id", mission_id)
                                 posts_result = posts_query.execute()
                                 
                                 if posts_result.data:
@@ -392,7 +405,7 @@ async def _fetch_posts_from_db(
                     return []
         
         # 일반적인 posts 쿼리 (journey 필터링 없음)
-        query = supabase.table("posts").select("id, content, created_at, user_id")
+        query = supabase.table("posts").select("id, content, answers_data, created_at, user_id")
 
         # 기타 필터 적용
         if user_id:
