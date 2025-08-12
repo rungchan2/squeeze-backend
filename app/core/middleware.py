@@ -9,6 +9,7 @@ import time
 import uuid
 import structlog
 from app.core.config import get_settings
+from app.db.redis import close_redis_client
 
 logger = structlog.get_logger()
 settings = get_settings()
