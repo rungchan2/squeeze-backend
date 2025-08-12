@@ -221,14 +221,44 @@ async def debug_journey_week_query(
     """
     Journey Week 데이터 조회 디버깅 엔드포인트
     """
-    from app.db.supabase import get_supabase_client
+    from app.db.supabase import get_supabase_client, get_supabase_admin_client
     
     try:
         supabase = get_supabase_client()
         debug_info = {}
         
+        # 현재 사용자 정보 확인
+        debug_info["current_user"] = {
+            "user_id": current_user.get("sub"),
+            "role": current_user.get("role"), 
+            "email": current_user.get("email")
+        }
+        
+        # Supabase client에 현재 사용자의 JWT 토큰 설정
+        # 이렇게 해야 RLS 정책이 올바르게 적용됩니다
+        from fastapi import Request
+        request = current_user.get("_request")  # 임시 방법
+        
         # 1단계: journey_week_id로 mission_instance_ids 조회
         logger.info(f"[DEBUG] Step 1: Querying mission instances for journey_week_id: {journey_week_id}")
+        
+        # Admin client로 테스트 (RLS 우회)
+        admin_supabase = get_supabase_admin_client()
+        try:
+            admin_mission_query = admin_supabase.table("journey_mission_instances").select("id, journey_week_id").eq("journey_week_id", journey_week_id)
+            admin_mission_result = admin_mission_query.execute()
+            debug_info["admin_client_test"] = {
+                "success": True,
+                "count": len(admin_mission_result.data) if admin_mission_result.data else 0,
+                "data": admin_mission_result.data
+            }
+        except Exception as admin_error:
+            debug_info["admin_client_test"] = {
+                "success": False,
+                "error": str(admin_error)
+            }
+        
+        # 일반 테이블 쿼리 (RLS 적용)
         mission_query = supabase.table("journey_mission_instances").select("id, journey_week_id").eq("journey_week_id", journey_week_id)
         mission_result = mission_query.execute()
         

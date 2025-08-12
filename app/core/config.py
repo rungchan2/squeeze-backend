@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     # Supabase
     SUPABASE_URL: str
     SUPABASE_ANON_KEY: str
+    SUPABASE_SERVICE_ROLE_KEY: str = ""  # Optional for admin operations
     PROJECT_ID: str
 
     # Security
