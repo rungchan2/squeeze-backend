@@ -124,6 +124,7 @@ async def analyze_range_word_frequency(
             analyzed_at=datetime.fromisoformat(
                 result["analyzed_at"].replace("Z", "+00:00")
             ),
+            source_texts=result.get("source_texts", []),
         )
 
     except (TextAnalysisError, ValidationError) as e:

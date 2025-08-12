@@ -104,6 +104,7 @@ class RangeAnalysisResponse(BaseResponse):
     word_frequency: List[Tuple[str, int]] = Field(..., description="단어와 빈도수 배열")
     total_posts: int = Field(..., ge=0, description="분석된 게시물 수")
     analyzed_at: datetime = Field(..., description="분석 시점")
+    source_texts: Optional[List[str]] = Field(None, description="분석에 사용된 원본 텍스트 배열")
 
     class Config:
         json_schema_extra = {

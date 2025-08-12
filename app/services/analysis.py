@@ -166,6 +166,7 @@ async def analyze_posts_range(
                 "word_frequency": [],
                 "total_posts": 0,
                 "analyzed_at": datetime.utcnow().isoformat(),
+                "source_texts": [],
             }
 
         # 텍스트 추출
@@ -184,6 +185,7 @@ async def analyze_posts_range(
                 "word_frequency": [],
                 "total_posts": len(posts_data),
                 "analyzed_at": datetime.utcnow().isoformat(),
+                "source_texts": [],
             }
 
         # 여러 텍스트 분석
@@ -203,6 +205,7 @@ async def analyze_posts_range(
             "word_frequency": word_frequency,
             "total_posts": len(posts_data),
             "analyzed_at": datetime.utcnow().isoformat(),
+            "source_texts": texts,
         }
 
         # 캐시 저장
