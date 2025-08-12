@@ -143,6 +143,9 @@ async def analyze_posts_range(
             if cached_result:
                 logger.debug("Cache hit for range analysis")
                 cached_result["cache_hit"] = True
+                # 이전 캐시에 source_texts가 없는 경우 빈 배열로 설정
+                if "source_texts" not in cached_result:
+                    cached_result["source_texts"] = []
                 return cached_result
 
         # 데이터베이스에서 posts 조회

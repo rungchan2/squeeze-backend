@@ -16,6 +16,7 @@ from app.models.schemas import (
 from app.core.dependencies import require_teacher_role
 from app.core.exceptions import TextAnalysisError, ValidationError
 from app.services.analysis import analyze_text, analyze_posts_range, group_words
+from app.services.cache import invalidate_journey_week_cache
 import structlog
 
 logger = structlog.get_logger()
@@ -179,3 +180,30 @@ async def group_words_endpoint(
     except Exception as e:
         logger.error(f"Unexpected error in word grouping: {e}")
         raise HTTPException(status_code=500, detail="단어 그룹핑 중 오류가 발생했습니다")
+
+
+@router.delete(
+    "/cache/journey-week/{journey_week_id}",
+    summary="Journey Week 캐시 무효화",
+    description="특정 journey week의 분석 캐시를 무효화합니다.",
+)
+async def invalidate_journey_week_cache_endpoint(
+    journey_week_id: str,
+    current_user: dict = Depends(require_teacher_role),  # Teacher 이상 권한 필요
+):
+    """
+    특정 journey week의 분석 캐시를 무효화합니다.
+    
+    새로운 필드가 추가되거나 분석 로직이 변경된 경우 사용합니다.
+    """
+    try:
+        deleted_count = await invalidate_journey_week_cache(journey_week_id)
+        
+        return {
+            "message": f"Journey week {journey_week_id}의 캐시 무효화 완료",
+            "deleted_keys": deleted_count
+        }
+        
+    except Exception as e:
+        logger.error(f"Error invalidating journey week cache: {e}")
+        raise HTTPException(status_code=500, detail="캐시 무효화 중 오류가 발생했습니다")
