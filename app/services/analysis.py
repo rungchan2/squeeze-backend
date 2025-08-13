@@ -175,18 +175,24 @@ async def analyze_posts_range(
         # 텍스트 추출 - answers_data와 content 모두에서 추출
         texts = []
         for post in posts_data:
-            # content 필드에서 텍스트 추출
+            # content 필드에서 텍스트 추출 (legacy missions)
             if post.get("content"):
                 texts.append(post["content"])
             
-            # answers_data에서 텍스트 추출
+            # answers_data에서 텍스트 추출 (modern missions)
             answers_data = post.get("answers_data")
             if answers_data and isinstance(answers_data, dict):
                 answers = answers_data.get("answers", [])
                 for answer in answers:
-                    answer_text = answer.get("answer_text", "")
-                    if answer_text and answer_text.strip():
-                        texts.append(answer_text)
+                    # 최신 구조: answer_text_plain 우선 사용 (HTML 태그 제거된 순수 텍스트)
+                    answer_text_plain = answer.get("answer_text_plain", "")
+                    if answer_text_plain and answer_text_plain.strip():
+                        texts.append(answer_text_plain)
+                    else:
+                        # fallback: legacy HTML 데이터 사용
+                        answer_text = answer.get("answer_text", "")
+                        if answer_text and answer_text.strip():
+                            texts.append(answer_text)
 
         if not texts:
             logger.warning("No text content found in posts")
