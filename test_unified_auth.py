@@ -2,6 +2,7 @@
 통합 인증 시스템 테스트
 실제 토큰 형식을 사용한 테스트
 """
+
 import asyncio
 import sys
 from app.services.supabase_unified_auth import authenticate_token

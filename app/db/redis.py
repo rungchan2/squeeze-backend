@@ -3,38 +3,68 @@ from typing import Optional
 import json
 import hashlib
 import structlog
+import os
+import asyncio
 from app.core.config import get_settings
 
 logger = structlog.get_logger()
 settings = get_settings()
 
 _redis_client: Optional[aioredis.Redis] = None
+_is_serverless = os.getenv("VERCEL") is not None
 
 
 async def get_redis_client() -> aioredis.Redis:
-    """Get or create Redis client singleton"""
+    """Get or create Redis client with proper connection management"""
     global _redis_client
 
-    if _redis_client is None:
+    # Always reuse existing healthy connection
+    if _redis_client is not None:
         try:
-            _redis_client = await aioredis.from_url(
-                settings.REDIS_URL, encoding="utf-8", decode_responses=True
-            )
-            logger.info("Redis client initialized successfully")
-        except Exception as e:
-            logger.error(f"Failed to initialize Redis client: {e}")
-            raise
+            # Quick health check with short timeout
+            await asyncio.wait_for(_redis_client.ping(), timeout=0.5)
+            return _redis_client
+        except (Exception, asyncio.TimeoutError):
+            logger.warning("Existing Redis client unhealthy, cleaning up")
+            try:
+                await _redis_client.close()
+            except:
+                pass
+            _redis_client = None
 
-    return _redis_client
+    # Create new client with connection pooling
+    try:
+        _redis_client = await aioredis.from_url(
+            settings.REDIS_URL, 
+            encoding="utf-8", 
+            decode_responses=True,
+            socket_connect_timeout=3,
+            socket_timeout=3,
+            retry_on_timeout=True,
+            max_connections=10,  # Connection pool limit
+            health_check_interval=60
+        )
+        logger.info(f"Redis client initialized ({'serverless' if _is_serverless else 'local'} mode)")
+        return _redis_client
+        
+    except Exception as e:
+        logger.error(f"Failed to initialize Redis client: {e}")
+        raise
 
 
 async def close_redis_client():
-    """Close Redis connection"""
+    """Close Redis connection gracefully"""
     global _redis_client
     if _redis_client:
-        await _redis_client.close()
-        _redis_client = None
-        logger.info("Redis client closed")
+        try:
+            await asyncio.wait_for(_redis_client.close(), timeout=2.0)
+            logger.info("Redis client closed gracefully")
+        except asyncio.TimeoutError:
+            logger.warning("Redis client close timed out")
+        except Exception as e:
+            logger.warning(f"Error closing Redis client: {e}")
+        finally:
+            _redis_client = None
 
 
 def generate_cache_key(
@@ -96,11 +126,24 @@ async def delete_cached_result(key: str) -> bool:
 
 
 async def check_redis_connection() -> bool:
-    """Check if Redis connection is healthy"""
+    """Check if Redis connection is healthy with proper timeout handling"""
     try:
         client = await get_redis_client()
-        await client.ping()
+        # Use timeout to prevent hanging in serverless environment
+        await asyncio.wait_for(client.ping(), timeout=2.0)
+        logger.info("Redis connection healthy")
         return True
+    except asyncio.TimeoutError:
+        logger.error("Redis connection check timed out")
+        return False
     except Exception as e:
         logger.error(f"Redis connection check failed: {e}")
+        # Try to clean up unhealthy client
+        global _redis_client
+        if _redis_client:
+            try:
+                await _redis_client.close()
+            except:
+                pass
+            _redis_client = None
         return False

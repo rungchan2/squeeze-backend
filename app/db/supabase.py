@@ -7,6 +7,7 @@ logger = structlog.get_logger()
 settings = get_settings()
 
 _supabase_client: Optional[Client] = None
+_supabase_admin_client: Optional[Client] = None
 
 
 def get_supabase_client() -> Client:
@@ -25,6 +26,25 @@ def get_supabase_client() -> Client:
             raise
 
     return _supabase_client
+
+
+def get_supabase_admin_client() -> Client:
+    """Get or create Supabase admin client with service role (bypasses RLS)"""
+    global _supabase_admin_client
+
+    if _supabase_admin_client is None and settings.SUPABASE_SERVICE_ROLE_KEY:
+        try:
+            # Admin client with service role key (bypasses RLS)
+            _supabase_admin_client = create_client(
+                settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY
+            )
+            logger.info("Supabase admin client initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize Supabase admin client: {e}")
+            # Fallback to regular client
+            return get_supabase_client()
+
+    return _supabase_admin_client or get_supabase_client()
 
 
 async def check_supabase_connection() -> bool:

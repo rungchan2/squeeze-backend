@@ -52,8 +52,11 @@ def get_cache_key(prefix: str, **kwargs) -> str:
     Returns:
         생성된 캐시 키
     """
+    # None 값은 제외하고 키 생성 (중요: None 값 포함 시 다른 journey도 같은 키 생성됨)
+    filtered_kwargs = {k: v for k, v in kwargs.items() if v is not None}
+    
     # 키워드 인수를 정렬하여 일관된 키 생성
-    sorted_kwargs = sorted(kwargs.items())
+    sorted_kwargs = sorted(filtered_kwargs.items())
     key_data = f"{prefix}:" + ":".join([f"{k}={v}" for k, v in sorted_kwargs])
 
     # 너무 긴 키는 해시로 축약
@@ -276,6 +279,20 @@ async def invalidate_user_cache(user_id: str) -> int:
     특정 사용자의 캐시를 무효화합니다.
     """
     return await invalidate_cache_pattern(f"*user_id={user_id}*")
+
+
+async def invalidate_journey_cache(journey_id: str) -> int:
+    """
+    특정 journey의 캐시를 무효화합니다.
+    """
+    return await invalidate_cache_pattern(f"*journey_id={journey_id}*")
+
+
+async def invalidate_journey_week_cache(journey_week_id: str) -> int:
+    """
+    특정 journey week의 캐시를 무효화합니다.
+    """
+    return await invalidate_cache_pattern(f"*journey_week_id={journey_week_id}*")
 
 
 async def invalidate_analysis_cache() -> int:

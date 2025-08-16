@@ -5,7 +5,8 @@
       "src": "main.py",
       "use": "@vercel/python",
       "config": {
-        "maxLambdaSize": "15mb"
+        "maxLambdaSize": "15mb",
+        "includeFiles": "**"
       }
     }
   ],
@@ -17,10 +18,5 @@
   ],
   "env": {
     "PYTHONPATH": "./"
-  },
-  "functions": {
-    "main.py": {
-      "includeFiles": "**"
-    }
   }
 }

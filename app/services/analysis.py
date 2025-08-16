@@ -19,7 +19,7 @@ from app.services.cache import (
     set_cached_value,
     get_cache_key,
 )
-from app.db.supabase import get_supabase_client
+from app.db.supabase import get_supabase_client, get_supabase_admin_client
 from app.core.exceptions import TextAnalysisError, ValidationError
 
 logger = structlog.get_logger()
@@ -143,6 +143,9 @@ async def analyze_posts_range(
             if cached_result:
                 logger.debug("Cache hit for range analysis")
                 cached_result["cache_hit"] = True
+                # 이전 캐시에 source_texts가 없는 경우 빈 배열로 설정
+                if "source_texts" not in cached_result:
+                    cached_result["source_texts"] = []
                 return cached_result
 
         # 데이터베이스에서 posts 조회
@@ -166,10 +169,30 @@ async def analyze_posts_range(
                 "word_frequency": [],
                 "total_posts": 0,
                 "analyzed_at": datetime.utcnow().isoformat(),
+                "source_texts": [],
             }
 
-        # 텍스트 추출
-        texts = [post.get("content", "") for post in posts_data if post.get("content")]
+        # 텍스트 추출 - answers_data와 content 모두에서 추출
+        texts = []
+        for post in posts_data:
+            # content 필드에서 텍스트 추출 (legacy missions)
+            if post.get("content"):
+                texts.append(post["content"])
+            
+            # answers_data에서 텍스트 추출 (modern missions)
+            answers_data = post.get("answers_data")
+            if answers_data and isinstance(answers_data, dict):
+                answers = answers_data.get("answers", [])
+                for answer in answers:
+                    # 최신 구조: answer_text_plain 우선 사용 (HTML 태그 제거된 순수 텍스트)
+                    answer_text_plain = answer.get("answer_text_plain", "")
+                    if answer_text_plain and answer_text_plain.strip():
+                        texts.append(answer_text_plain)
+                    else:
+                        # fallback: legacy HTML 데이터 사용
+                        answer_text = answer.get("answer_text", "")
+                        if answer_text and answer_text.strip():
+                            texts.append(answer_text)
 
         if not texts:
             logger.warning("No text content found in posts")
@@ -184,6 +207,7 @@ async def analyze_posts_range(
                 "word_frequency": [],
                 "total_posts": len(posts_data),
                 "analyzed_at": datetime.utcnow().isoformat(),
+                "source_texts": [],
             }
 
         # 여러 텍스트 분석
@@ -203,6 +227,7 @@ async def analyze_posts_range(
             "word_frequency": word_frequency,
             "total_posts": len(posts_data),
             "analyzed_at": datetime.utcnow().isoformat(),
+            "source_texts": texts,
         }
 
         # 캐시 저장
@@ -322,20 +347,79 @@ async def _fetch_posts_from_db(
     데이터베이스에서 posts를 조회합니다.
     """
     try:
-        supabase = get_supabase_client()
+        # RLS를 우회하여 모든 데이터에 접근하기 위해 admin client 사용
+        supabase = get_supabase_admin_client()
 
-        # posts 테이블 쿼리 구성
-        query = supabase.table("posts").select("id, content, created_at, user_id")
+        # posts 테이블 쿼리 구성 - 올바른 Supabase client 문법 사용
+        if journey_id or journey_week_id:
+            if journey_week_id:
+                # journey_week_id로 mission_instance_ids 조회
+                logger.info(f"Querying mission instances for journey_week_id: {journey_week_id}")
+                mission_query = supabase.table("journey_mission_instances").select("id").eq("journey_week_id", journey_week_id)
+                mission_result = mission_query.execute()
+                
+                logger.info(f"Mission query result: {mission_result.data}")
+                
+                if mission_result.data:
+                    mission_ids = [item["id"] for item in mission_result.data]
+                    logger.info(f"Found mission_ids: {mission_ids}")
+                    
+                    # 각 mission_id에 대해 posts 조회 (in 연산자 문제 회피)
+                    all_posts = []
+                    for mission_id in mission_ids:
+                        posts_query = supabase.table("posts").select("id, content, answers_data, created_at, user_id").eq("mission_instance_id", mission_id)
+                        posts_result = posts_query.execute()
+                        
+                        if posts_result.data:
+                            logger.info(f"Found {len(posts_result.data)} posts for mission_id: {mission_id}")
+                            all_posts.extend(posts_result.data)
+                    
+                    logger.info(f"Total posts found: {len(all_posts)}")
+                    return all_posts
+                else:
+                    logger.warning("No mission instances found for journey_week_id")
+                    return []
+                    
+            elif journey_id:
+                # journey_id로 journey_week_ids 먼저 조회
+                logger.info(f"Querying journey weeks for journey_id: {journey_id}")
+                week_query = supabase.table("journey_weeks").select("id").eq("journey_id", journey_id)
+                week_result = week_query.execute()
+                
+                if week_result.data:
+                    week_ids = [item["id"] for item in week_result.data]
+                    logger.info(f"Found week_ids: {week_ids}")
+                    
+                    # 각 week_id에 대해 mission_instances 조회
+                    all_posts = []
+                    for week_id in week_ids:
+                        mission_query = supabase.table("journey_mission_instances").select("id").eq("journey_week_id", week_id)
+                        mission_result = mission_query.execute()
+                        
+                        if mission_result.data:
+                            for mission_data in mission_result.data:
+                                mission_id = mission_data["id"]
+                                posts_query = supabase.table("posts").select("id, content, answers_data, created_at, user_id").eq("mission_instance_id", mission_id)
+                                posts_result = posts_query.execute()
+                                
+                                if posts_result.data:
+                                    all_posts.extend(posts_result.data)
+                    
+                    logger.info(f"Total posts found for journey: {len(all_posts)}")
+                    return all_posts
+                else:
+                    logger.warning("No journey weeks found for journey_id")
+                    return []
+        
+        # 일반적인 posts 쿼리 (journey 필터링 없음)
+        query = supabase.table("posts").select("id, content, answers_data, created_at, user_id")
 
-        # 필터 적용
+        # 기타 필터 적용
         if user_id:
             query = query.eq("user_id", user_id)
 
         if mission_instance_id:
             query = query.eq("mission_instance_id", mission_instance_id)
-
-        # TODO: journey_id, journey_week_id 필터링
-        # 실제 데이터베이스 스키마에 맞게 조정 필요
 
         result = query.execute()
 
@@ -347,9 +431,9 @@ async def _fetch_posts_from_db(
             return []
 
     except Exception as e:
-        logger.error(f"Error fetching posts from database: {e}")
-        # 개발 중에는 임시 데이터 반환
-        return _get_mock_posts_data()
+        logger.error(f"Error fetching posts from database: {e}", exc_info=True)
+        # 예외를 다시 발생시켜서 실제 문제를 확인
+        raise e
 
 
 def _get_mock_posts_data() -> List[Dict[str, Any]]:
@@ -388,15 +472,15 @@ def _determine_analysis_scope(
     분석 범위를 결정합니다.
     """
     if user_id:
-        return "USER"
+        return "user"
     elif mission_instance_id:
-        return "MISSION_INSTANCE"
+        return "mission_instance"
     elif journey_week_id:
-        return "JOURNEY_WEEK"
+        return "journey_week"
     elif journey_id:
-        return "JOURNEY"
+        return "journey"
     else:
-        return "UNKNOWN"
+        return "unknown"
 
 
 def _build_range_info(

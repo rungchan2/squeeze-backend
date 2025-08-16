@@ -1,6 +1,12 @@
 # 🎓 project-basic.md
 창업동아리 성찰문 Theme 분석 & 시각화 백엔드 (FastAPI)
 
+## 📊 프로젝트 현황 (2025-08-12)
+- **상태**: ✅ Production 배포 완료 (Vercel)
+- **Health Check**: 정상 작동 중
+- **주요 기능**: 텍스트 분석, 형태소 분석, 캐싱
+- **인증**: Supabase JWT 토큰 검증 구현 완료
+
 본 문서는 제품 목적(PRD)과 기술 스택 및 운영 원칙을 한 파일로 요약합니다. 세부 API는 `api-spec.md`, 스키마 이전은 `schema-migration-strategy.md`를 참고하세요. 또한 migration 이전 supabase full schema 를 확인하려면 `full-supabase-schema.md`를 확인하세요.
 
 ---
@@ -68,11 +74,19 @@
 
 ## 6. 상위 아키텍처
 
-Next.js 대시보드 → FastAPI → Supabase
+Next.js 대시보드 → FastAPI (Vercel) → Supabase + Redis
 
-- Next.js: 범위 선택 → `/word-freq`, `/group-words`, `/analyze/theme-summary` 호출.
-- FastAPI: 캐시 조회 → 미스 시 DB 원문 수집 → NLP → 결과 저장 → 응답.
-- Supabase: 원본 데이터(posts, journeys 등) + 구조화 저장(post_answers) + 캐시(word_analysis_results, word_clusters).
+### 구현 완료 ✅
+- **FastAPI on Vercel**: Serverless 환경에서 운영 중
+- **Supabase**: PostgreSQL 데이터베이스 + JWT 인증
+- **Redis**: 캐싱 레이어 (serverless 최적화됨)
+- **NLP**: konlpy/Okt (개발) + fallback (프로덕션)
+
+### 데이터 플로우
+- Next.js: 범위 선택 → `/analyze/text`, `/analyze/multiple` 호출
+- FastAPI: 캐시 조회 → 미스 시 NLP 처리 → 결과 저장 → 응답
+- Supabase: 원본 데이터 + 사용자 인증
+- Redis: 분석 결과 캐싱 (TTL 7일)
 
 ---
 
@@ -150,9 +164,40 @@ Next.js 대시보드 → FastAPI → Supabase
 - 단계적 마이그레이션과 철저한 검증으로 안정적인 운영 전환이 가능하다.
 
 ## 14. 환경 변수
-.env.local 에 저장됨
 
-- REDIS_URL : redis 연결용
-- SUPABASE_URL : supabase url
-- SUPABASE_ANON_KEY : supabase anon key
-- PROJECT_ID : supabase project id
+### Production (Vercel) ✅
+- `REDIS_URL`: Redis 연결 URL (필수)
+- `SUPABASE_URL`: Supabase 프로젝트 URL (필수)
+- `SUPABASE_ANON_KEY`: Supabase 공개 키 (필수)
+- `PROJECT_ID`: egptutozdfchliouephl
+- `VERCEL`: "1" (자동 설정)
+
+### Development (.env.local)
+- 위 환경 변수 + 개발용 설정
+- `LOG_LEVEL`: "DEBUG"
+- 로컬 Redis/Supabase 연결 정보
+
+## 15. 기술 스택 현황
+
+### Backend
+- **Framework**: FastAPI 0.104.1 ✅
+- **Language**: Python 3.12
+- **Deployment**: Vercel (Serverless) ✅
+
+### Database & Storage
+- **Primary DB**: Supabase (PostgreSQL) ✅
+- **Cache**: Redis (Cloud) ✅
+- **File Storage**: Supabase Storage
+
+### NLP & Processing
+- **Development**: konlpy (Okt), jpype1
+- **Production**: nltk, regex (fallback) ✅
+
+### Authentication
+- **Method**: Supabase JWT ✅
+- **Token Support**: Bearer, Session, Custom Auth Hook
+
+### Monitoring
+- **Logging**: structlog ✅
+- **Health Check**: `/api/v1/health` ✅
+- **Error Tracking**: 구조화된 로깅
