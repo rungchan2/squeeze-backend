@@ -124,9 +124,24 @@ async def analyze_posts_range(
         분석 결과
     """
     try:
+        # 분석 타입 로깅
+        analysis_type = "개별 학생 분석" if user_id else "전체 학생 분석"
+        logger.info(f"Starting {analysis_type}: journey_id={journey_id}, journey_week_id={journey_week_id}, mission_instance_id={mission_instance_id}, user_id={user_id}, top_n={top_n}, min_count={min_count}")
+        
         # 파라미터 검증
         if not any([journey_id, journey_week_id, mission_instance_id, user_id]):
             raise ValidationError("최소 하나의 범위 파라미터가 필요합니다")
+        
+        # user_id가 제공된 경우 유효성 검증
+        if user_id:
+            is_valid_user = await _validate_user_access(
+                user_id=user_id,
+                journey_id=journey_id,
+                journey_week_id=journey_week_id,
+                mission_instance_id=mission_instance_id
+            )
+            if not is_valid_user:
+                raise ValidationError(f"사용자 {user_id}는 해당 범위에 접근할 수 없습니다")
 
         # 캐시 조회 (force_refresh가 False인 경우)
         cached_result = None
@@ -157,7 +172,7 @@ async def analyze_posts_range(
         )
 
         if not posts_data:
-            logger.warning("No posts found for given range parameters")
+            logger.warning(f"No posts found for {analysis_type} with parameters: journey_id={journey_id}, journey_week_id={journey_week_id}, mission_instance_id={mission_instance_id}, user_id={user_id}")
             return {
                 "scope": _determine_analysis_scope(
                     journey_id, journey_week_id, mission_instance_id, user_id
@@ -195,7 +210,7 @@ async def analyze_posts_range(
                             texts.append(answer_text)
 
         if not texts:
-            logger.warning("No text content found in posts")
+            logger.warning(f"No text content found in {len(posts_data)} posts for {analysis_type}")
             return {
                 "scope": _determine_analysis_scope(
                     journey_id, journey_week_id, mission_instance_id, user_id
@@ -209,11 +224,15 @@ async def analyze_posts_range(
                 "analyzed_at": datetime.utcnow().isoformat(),
                 "source_texts": [],
             }
+        else:
+            logger.info(f"Extracted {len(texts)} texts from {len(posts_data)} posts for {analysis_type}")
 
         # 여러 텍스트 분석
         word_frequency = analyze_multiple_texts(
             texts=texts, top_n=top_n, min_count=min_count
         )
+        
+        logger.info(f"Analysis completed for {analysis_type}: found {len(word_frequency)} words, {len(posts_data)} posts")
 
         # 결과 구성
         result = {
@@ -368,6 +387,12 @@ async def _fetch_posts_from_db(
                     all_posts = []
                     for mission_id in mission_ids:
                         posts_query = supabase.table("posts").select("id, content, answers_data, created_at, user_id").eq("mission_instance_id", mission_id)
+                        
+                        # user_id 필터 적용
+                        if user_id:
+                            posts_query = posts_query.eq("user_id", user_id)
+                            logger.debug(f"Applying user_id filter: {user_id} for mission_id: {mission_id}")
+                        
                         posts_result = posts_query.execute()
                         
                         if posts_result.data:
@@ -400,6 +425,12 @@ async def _fetch_posts_from_db(
                             for mission_data in mission_result.data:
                                 mission_id = mission_data["id"]
                                 posts_query = supabase.table("posts").select("id, content, answers_data, created_at, user_id").eq("mission_instance_id", mission_id)
+                                
+                                # user_id 필터 적용
+                                if user_id:
+                                    posts_query = posts_query.eq("user_id", user_id)
+                                    logger.debug(f"Applying user_id filter: {user_id} for mission_id: {mission_id}")
+                                
                                 posts_result = posts_query.execute()
                                 
                                 if posts_result.data:
@@ -470,17 +501,28 @@ def _determine_analysis_scope(
 ) -> str:
     """
     분석 범위를 결정합니다.
+    개별 사용자 분석과 전체 분석을 구분합니다.
     """
     if user_id:
-        return "user"
-    elif mission_instance_id:
-        return "mission_instance"
-    elif journey_week_id:
-        return "journey_week"
-    elif journey_id:
-        return "journey"
+        # 개별 사용자 분석
+        if mission_instance_id:
+            return "individual_user_mission"
+        elif journey_week_id:
+            return "individual_user_week"
+        elif journey_id:
+            return "individual_user_journey"
+        else:
+            return "individual_user"
     else:
-        return "unknown"
+        # 전체 분석
+        if mission_instance_id:
+            return "mission_instance"
+        elif journey_week_id:
+            return "journey_week"
+        elif journey_id:
+            return "journey"
+        else:
+            return "unknown"
 
 
 def _build_range_info(
@@ -504,3 +546,82 @@ def _build_range_info(
         range_info["user_id"] = user_id
 
     return range_info
+
+
+async def _validate_user_access(
+    user_id: str,
+    journey_id: Optional[str] = None,
+    journey_week_id: Optional[str] = None,
+    mission_instance_id: Optional[str] = None,
+) -> bool:
+    """
+    사용자가 해당 범위에 접근할 수 있는지 검증합니다.
+    
+    Args:
+        user_id: 검증할 사용자 ID
+        journey_id: Journey ID
+        journey_week_id: Journey Week ID
+        mission_instance_id: Mission Instance ID
+    
+    Returns:
+        접근 가능 여부
+    """
+    try:
+        supabase = get_supabase_admin_client()
+        
+        # mission_instance_id가 제공된 경우
+        if mission_instance_id:
+            # 해당 mission_instance에 사용자가 posts를 작성했는지 확인
+            posts_query = supabase.table("posts").select("id").eq("mission_instance_id", mission_instance_id).eq("user_id", user_id).limit(1)
+            posts_result = posts_query.execute()
+            return len(posts_result.data) > 0
+        
+        # journey_week_id가 제공된 경우
+        elif journey_week_id:
+            # journey_week_id로 mission_instances 조회
+            mission_query = supabase.table("journey_mission_instances").select("id").eq("journey_week_id", journey_week_id)
+            mission_result = mission_query.execute()
+            
+            if mission_result.data:
+                mission_ids = [item["id"] for item in mission_result.data]
+                
+                # 해당 mission_instances에 사용자가 posts를 작성했는지 확인
+                for mission_id in mission_ids:
+                    posts_query = supabase.table("posts").select("id").eq("mission_instance_id", mission_id).eq("user_id", user_id).limit(1)
+                    posts_result = posts_query.execute()
+                    if posts_result.data:
+                        return True
+            return False
+        
+        # journey_id가 제공된 경우
+        elif journey_id:
+            # journey_id로 weeks 조회 후 mission_instances 조회
+            week_query = supabase.table("journey_weeks").select("id").eq("journey_id", journey_id)
+            week_result = week_query.execute()
+            
+            if week_result.data:
+                for week_data in week_result.data:
+                    week_id = week_data["id"]
+                    mission_query = supabase.table("journey_mission_instances").select("id").eq("journey_week_id", week_id)
+                    mission_result = mission_query.execute()
+                    
+                    if mission_result.data:
+                        for mission_data in mission_result.data:
+                            mission_id = mission_data["id"]
+                            posts_query = supabase.table("posts").select("id").eq("mission_instance_id", mission_id).eq("user_id", user_id).limit(1)
+                            posts_result = posts_query.execute()
+                            if posts_result.data:
+                                return True
+            return False
+        
+        # 범위가 지정되지 않은 경우, 해당 사용자가 존재하는지만 확인
+        else:
+            # profiles 테이블에서 사용자 존재 여부 확인
+            profile_query = supabase.table("profiles").select("id").eq("id", user_id).limit(1)
+            profile_result = profile_query.execute()
+            return len(profile_result.data) > 0
+            
+    except Exception as e:
+        logger.error(f"Error validating user access: {e}")
+        # 검증 오류 시 접근 허용 (관대한 정책)
+        return True

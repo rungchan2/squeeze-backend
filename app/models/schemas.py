@@ -24,6 +24,10 @@ class AnalysisScope(str, Enum):
     JOURNEY_WEEK = "journey_week"
     MISSION_INSTANCE = "mission_instance"
     USER = "user"
+    INDIVIDUAL_USER = "individual_user"
+    INDIVIDUAL_USER_JOURNEY = "individual_user_journey"
+    INDIVIDUAL_USER_WEEK = "individual_user_week"
+    INDIVIDUAL_USER_MISSION = "individual_user_mission"
     UNKNOWN = "unknown"
 
 
