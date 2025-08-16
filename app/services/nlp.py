@@ -5,6 +5,7 @@ Korean text processing with fallback for deployment environments
 from typing import List, Tuple, Dict, Optional
 from collections import Counter
 import re
+import html
 import structlog
 
 logger = structlog.get_logger()
@@ -118,6 +119,13 @@ KOREAN_STOPWORDS = {
     "was",
     "are",
     "were",
+    # HTML 이스케이프 문자들 (디코딩되지 않은 경우 대비)
+    "lt",
+    "gt",
+    "amp",
+    "quot",
+    "apos",
+    "nbsp",
 }
 
 
@@ -141,10 +149,15 @@ def initialize_okt() -> Optional[Okt]:
 def normalize_text(text: str) -> str:
     """
     텍스트 정규화
+    - HTML 엔티티 디코딩
+    - HTML 태그 제거
     - 특수문자 제거
     - 공백 정리
     - 소문자 변환 (영어)
     """
+    # HTML 엔티티 디코딩 (&lt; → <, &gt; → >, &amp; → & 등)
+    text = html.unescape(text)
+    
     # HTML 태그 제거
     text = re.sub(r"<[^>]+>", "", text)
 
