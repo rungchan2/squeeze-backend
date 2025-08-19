@@ -100,7 +100,7 @@ async def analyze_range_word_frequency(
         범위별 단어 빈도 분석 결과
     """
     try:
-        # 범위별 분석 서비스 호출
+        # 범위별 분석 서비스 호출 - 현재 사용자의 role 전달
         result = await analyze_posts_range(
             journey_id=journey_id,
             journey_week_id=journey_week_id,
@@ -109,6 +109,7 @@ async def analyze_range_word_frequency(
             top_n=top_n,
             min_count=min_count,
             force_refresh=force_refresh,
+            current_user_role=current_user.get("role", "user"),
         )
 
         from datetime import datetime

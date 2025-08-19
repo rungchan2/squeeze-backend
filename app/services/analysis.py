@@ -2,6 +2,7 @@
 텍스트 분석 서비스
 NLP 및 캐싱을 통합한 텍스트 분석 기능
 """
+
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 import structlog
@@ -107,6 +108,7 @@ async def analyze_posts_range(
     top_n: int = 50,
     min_count: int = 1,
     force_refresh: bool = False,
+    current_user_role: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     범위별 posts 데이터를 분석합니다.
@@ -119,6 +121,7 @@ async def analyze_posts_range(
         top_n: 상위 N개 단어
         min_count: 최소 출현 횟수
         force_refresh: 캐시 무시 여부
+        current_user_role: 현재 사용자의 role (admin/teacher/user)
 
     Returns:
         분석 결과
@@ -126,22 +129,27 @@ async def analyze_posts_range(
     try:
         # 분석 타입 로깅
         analysis_type = "개별 학생 분석" if user_id else "전체 학생 분석"
-        logger.info(f"Starting {analysis_type}: journey_id={journey_id}, journey_week_id={journey_week_id}, mission_instance_id={mission_instance_id}, user_id={user_id}, top_n={top_n}, min_count={min_count}")
-        
+        logger.info(
+            f"Starting {analysis_type}: journey_id={journey_id}, journey_week_id={journey_week_id}, mission_instance_id={mission_instance_id}, user_id={user_id}, top_n={top_n}, min_count={min_count}"
+        )
+
         # 파라미터 검증
         if not any([journey_id, journey_week_id, mission_instance_id, user_id]):
             raise ValidationError("최소 하나의 범위 파라미터가 필요합니다")
-        
+
         # user_id가 제공된 경우 유효성 검증
         if user_id:
             is_valid_user = await _validate_user_access(
                 user_id=user_id,
                 journey_id=journey_id,
                 journey_week_id=journey_week_id,
-                mission_instance_id=mission_instance_id
+                mission_instance_id=mission_instance_id,
+                current_user_role=current_user_role,
             )
             if not is_valid_user:
-                raise ValidationError(f"사용자 {user_id}는 해당 범위에 접근할 수 없습니다")
+                raise ValidationError(
+                    f"사용자 {user_id}는 해당 범위에 접근할 수 없습니다"
+                )
 
         # 캐시 조회 (force_refresh가 False인 경우)
         cached_result = None
@@ -172,7 +180,9 @@ async def analyze_posts_range(
         )
 
         if not posts_data:
-            logger.warning(f"No posts found for {analysis_type} with parameters: journey_id={journey_id}, journey_week_id={journey_week_id}, mission_instance_id={mission_instance_id}, user_id={user_id}")
+            logger.warning(
+                f"No posts found for {analysis_type} with parameters: journey_id={journey_id}, journey_week_id={journey_week_id}, mission_instance_id={mission_instance_id}, user_id={user_id}"
+            )
             return {
                 "scope": _determine_analysis_scope(
                     journey_id, journey_week_id, mission_instance_id, user_id
@@ -193,7 +203,7 @@ async def analyze_posts_range(
             # content 필드에서 텍스트 추출 (legacy missions)
             if post.get("content"):
                 texts.append(post["content"])
-            
+
             # answers_data에서 텍스트 추출 (modern missions)
             answers_data = post.get("answers_data")
             if answers_data and isinstance(answers_data, dict):
@@ -210,7 +220,9 @@ async def analyze_posts_range(
                             texts.append(answer_text)
 
         if not texts:
-            logger.warning(f"No text content found in {len(posts_data)} posts for {analysis_type}")
+            logger.warning(
+                f"No text content found in {len(posts_data)} posts for {analysis_type}"
+            )
             return {
                 "scope": _determine_analysis_scope(
                     journey_id, journey_week_id, mission_instance_id, user_id
@@ -225,14 +237,18 @@ async def analyze_posts_range(
                 "source_texts": [],
             }
         else:
-            logger.info(f"Extracted {len(texts)} texts from {len(posts_data)} posts for {analysis_type}")
+            logger.info(
+                f"Extracted {len(texts)} texts from {len(posts_data)} posts for {analysis_type}"
+            )
 
         # 여러 텍스트 분석
         word_frequency = analyze_multiple_texts(
             texts=texts, top_n=top_n, min_count=min_count
         )
-        
-        logger.info(f"Analysis completed for {analysis_type}: found {len(word_frequency)} words, {len(posts_data)} posts")
+
+        logger.info(
+            f"Analysis completed for {analysis_type}: found {len(word_frequency)} words, {len(posts_data)} posts"
+        )
 
         # 결과 구성
         result = {
@@ -373,77 +389,109 @@ async def _fetch_posts_from_db(
         if journey_id or journey_week_id:
             if journey_week_id:
                 # journey_week_id로 mission_instance_ids 조회
-                logger.info(f"Querying mission instances for journey_week_id: {journey_week_id}")
-                mission_query = supabase.table("journey_mission_instances").select("id").eq("journey_week_id", journey_week_id)
+                logger.info(
+                    f"Querying mission instances for journey_week_id: {journey_week_id}"
+                )
+                mission_query = (
+                    supabase.table("journey_mission_instances")
+                    .select("id")
+                    .eq("journey_week_id", journey_week_id)
+                )
                 mission_result = mission_query.execute()
-                
+
                 logger.info(f"Mission query result: {mission_result.data}")
-                
+
                 if mission_result.data:
                     mission_ids = [item["id"] for item in mission_result.data]
                     logger.info(f"Found mission_ids: {mission_ids}")
-                    
+
                     # 각 mission_id에 대해 posts 조회 (in 연산자 문제 회피)
                     all_posts = []
                     for mission_id in mission_ids:
-                        posts_query = supabase.table("posts").select("id, content, answers_data, created_at, user_id").eq("mission_instance_id", mission_id)
-                        
+                        posts_query = (
+                            supabase.table("posts")
+                            .select("id, content, answers_data, created_at, user_id")
+                            .eq("mission_instance_id", mission_id)
+                        )
+
                         # user_id 필터 적용
                         if user_id:
                             posts_query = posts_query.eq("user_id", user_id)
-                            logger.debug(f"Applying user_id filter: {user_id} for mission_id: {mission_id}")
-                        
+                            logger.debug(
+                                f"Applying user_id filter: {user_id} for mission_id: {mission_id}"
+                            )
+
                         posts_result = posts_query.execute()
-                        
+
                         if posts_result.data:
-                            logger.info(f"Found {len(posts_result.data)} posts for mission_id: {mission_id}")
+                            logger.info(
+                                f"Found {len(posts_result.data)} posts for mission_id: {mission_id}"
+                            )
                             all_posts.extend(posts_result.data)
-                    
+
                     logger.info(f"Total posts found: {len(all_posts)}")
                     return all_posts
                 else:
                     logger.warning("No mission instances found for journey_week_id")
                     return []
-                    
+
             elif journey_id:
                 # journey_id로 journey_week_ids 먼저 조회
                 logger.info(f"Querying journey weeks for journey_id: {journey_id}")
-                week_query = supabase.table("journey_weeks").select("id").eq("journey_id", journey_id)
+                week_query = (
+                    supabase.table("journey_weeks")
+                    .select("id")
+                    .eq("journey_id", journey_id)
+                )
                 week_result = week_query.execute()
-                
+
                 if week_result.data:
                     week_ids = [item["id"] for item in week_result.data]
                     logger.info(f"Found week_ids: {week_ids}")
-                    
+
                     # 각 week_id에 대해 mission_instances 조회
                     all_posts = []
                     for week_id in week_ids:
-                        mission_query = supabase.table("journey_mission_instances").select("id").eq("journey_week_id", week_id)
+                        mission_query = (
+                            supabase.table("journey_mission_instances")
+                            .select("id")
+                            .eq("journey_week_id", week_id)
+                        )
                         mission_result = mission_query.execute()
-                        
+
                         if mission_result.data:
                             for mission_data in mission_result.data:
                                 mission_id = mission_data["id"]
-                                posts_query = supabase.table("posts").select("id, content, answers_data, created_at, user_id").eq("mission_instance_id", mission_id)
-                                
+                                posts_query = (
+                                    supabase.table("posts")
+                                    .select(
+                                        "id, content, answers_data, created_at, user_id"
+                                    )
+                                    .eq("mission_instance_id", mission_id)
+                                )
+
                                 # user_id 필터 적용
                                 if user_id:
                                     posts_query = posts_query.eq("user_id", user_id)
-                                    logger.debug(f"Applying user_id filter: {user_id} for mission_id: {mission_id}")
-                                
+                                    logger.debug(
+                                        f"Applying user_id filter: {user_id} for mission_id: {mission_id}"
+                                    )
+
                                 posts_result = posts_query.execute()
-                                
+
                                 if posts_result.data:
                                     all_posts.extend(posts_result.data)
-                    
+
                     logger.info(f"Total posts found for journey: {len(all_posts)}")
                     return all_posts
                 else:
                     logger.warning("No journey weeks found for journey_id")
                     return []
-        
+
         # 일반적인 posts 쿼리 (journey 필터링 없음)
-        query = supabase.table("posts").select("id, content, answers_data, created_at, user_id")
+        query = supabase.table("posts").select(
+            "id, content, answers_data, created_at, user_id"
+        )
 
         # 기타 필터 적용
         if user_id:
@@ -553,74 +601,116 @@ async def _validate_user_access(
     journey_id: Optional[str] = None,
     journey_week_id: Optional[str] = None,
     mission_instance_id: Optional[str] = None,
+    current_user_role: Optional[str] = None,
 ) -> bool:
     """
     사용자가 해당 범위에 접근할 수 있는지 검증합니다.
-    
+
     Args:
         user_id: 검증할 사용자 ID
         journey_id: Journey ID
         journey_week_id: Journey Week ID
         mission_instance_id: Mission Instance ID
-    
+        current_user_role: 현재 요청하는 사용자의 role
+
     Returns:
         접근 가능 여부
     """
     try:
-        supabase = get_supabase_admin_client()
+        # admin이나 teacher는 모든 사용자의 데이터에 접근 가능
+        if current_user_role in ["admin", "teacher"]:
+            logger.info(
+                f"Admin/Teacher access granted for user_id: {user_id} by role: {current_user_role}"
+            )
+            return True
         
+        supabase = get_supabase_admin_client()
+
+        # 일반 사용자는 자신의 데이터만 접근 가능
         # mission_instance_id가 제공된 경우
         if mission_instance_id:
             # 해당 mission_instance에 사용자가 posts를 작성했는지 확인
-            posts_query = supabase.table("posts").select("id").eq("mission_instance_id", mission_instance_id).eq("user_id", user_id).limit(1)
+            posts_query = (
+                supabase.table("posts")
+                .select("id")
+                .eq("mission_instance_id", mission_instance_id)
+                .eq("user_id", user_id)
+                .limit(1)
+            )
             posts_result = posts_query.execute()
             return len(posts_result.data) > 0
-        
+
         # journey_week_id가 제공된 경우
         elif journey_week_id:
             # journey_week_id로 mission_instances 조회
-            mission_query = supabase.table("journey_mission_instances").select("id").eq("journey_week_id", journey_week_id)
+            mission_query = (
+                supabase.table("journey_mission_instances")
+                .select("id")
+                .eq("journey_week_id", journey_week_id)
+            )
             mission_result = mission_query.execute()
-            
+
             if mission_result.data:
                 mission_ids = [item["id"] for item in mission_result.data]
-                
+
                 # 해당 mission_instances에 사용자가 posts를 작성했는지 확인
                 for mission_id in mission_ids:
-                    posts_query = supabase.table("posts").select("id").eq("mission_instance_id", mission_id).eq("user_id", user_id).limit(1)
+                    posts_query = (
+                        supabase.table("posts")
+                        .select("id")
+                        .eq("mission_instance_id", mission_id)
+                        .eq("user_id", user_id)
+                        .limit(1)
+                    )
                     posts_result = posts_query.execute()
                     if posts_result.data:
                         return True
             return False
-        
+
         # journey_id가 제공된 경우
         elif journey_id:
             # journey_id로 weeks 조회 후 mission_instances 조회
-            week_query = supabase.table("journey_weeks").select("id").eq("journey_id", journey_id)
+            week_query = (
+                supabase.table("journey_weeks")
+                .select("id")
+                .eq("journey_id", journey_id)
+            )
             week_result = week_query.execute()
-            
+
             if week_result.data:
                 for week_data in week_result.data:
                     week_id = week_data["id"]
-                    mission_query = supabase.table("journey_mission_instances").select("id").eq("journey_week_id", week_id)
+                    mission_query = (
+                        supabase.table("journey_mission_instances")
+                        .select("id")
+                        .eq("journey_week_id", week_id)
+                    )
                     mission_result = mission_query.execute()
-                    
+
                     if mission_result.data:
                         for mission_data in mission_result.data:
                             mission_id = mission_data["id"]
-                            posts_query = supabase.table("posts").select("id").eq("mission_instance_id", mission_id).eq("user_id", user_id).limit(1)
+                            posts_query = (
+                                supabase.table("posts")
+                                .select("id")
+                                .eq("mission_instance_id", mission_id)
+                                .eq("user_id", user_id)
+                                .limit(1)
+                            )
                             posts_result = posts_query.execute()
                             if posts_result.data:
                                 return True
             return False
-        
+
         # 범위가 지정되지 않은 경우, 해당 사용자가 존재하는지만 확인
         else:
             # profiles 테이블에서 사용자 존재 여부 확인
-            profile_query = supabase.table("profiles").select("id").eq("id", user_id).limit(1)
+            profile_query = (
+                supabase.table("profiles").select("id").eq("id", user_id).limit(1)
+            )
             profile_result = profile_query.execute()
             return len(profile_result.data) > 0
-            
+
     except Exception as e:
         logger.error(f"Error validating user access: {e}")
         # 검증 오류 시 접근 허용 (관대한 정책)
